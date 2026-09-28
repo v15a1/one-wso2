@@ -55,6 +55,7 @@
 // Admin last because it configures the rest. Don't sort it.
 
 import {
+  CalendarRangeIcon,
   ChartNoAxesCombinedIcon,
   MegaphoneIcon,
   PaletteIcon,
@@ -172,6 +173,29 @@ export const MARKETING_OPS_APPS: readonly MenuApp[] = [
         desc: "Review submitted attendee lists, approve or send back, and export for Pardot.",
         requires: ["admin"],
         path: "/marketing-ops/events/review",
+      },
+    ],
+  },
+  {
+    // The agenda-organizer port — a different app from Events above (attendee
+    // workbooks), which is why its ids are `mops-event-platform*` and never
+    // `mops-events-*`. Placed next to Events because the two are used by the
+    // same people around the same events.
+    key: "event-platform",
+    name: "Event Platform",
+    icon: CalendarRangeIcon,
+    purpose:
+      "Plan an event's agenda, speakers, rooms and activities, and run its swag shop.",
+    items: [
+      // ONE rail entry, with the source's two sidebars turned into tabs inside
+      // it — the Leave pattern. See event-platform/eventPlatformTabs.ts.
+      // Gate: `eventplatform` OR `eventplatform-shop`.
+      {
+        id: "mops-event-platform",
+        label: "Event Platform",
+        desc: "Events, their agendas and speakers, and the event shop.",
+        requires: ["admin"],
+        path: "/marketing-ops/event-platform",
       },
     ],
   },
@@ -342,6 +366,7 @@ export const MARKETING_OPS_EYEBROW = {
   emailWorkbench: eyebrowFor("email-workbench"),
   adCampaigns: eyebrowFor("ad-campaigns"),
   events: eyebrowFor("events"),
+  eventPlatform: eyebrowFor("event-platform"),
   crmUpload: eyebrowFor("crm-upload"),
   designStudio: eyebrowFor("design-studio"),
   utilities: eyebrowFor("utilities"),

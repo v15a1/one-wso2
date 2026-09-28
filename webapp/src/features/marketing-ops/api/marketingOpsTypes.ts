@@ -47,7 +47,13 @@ export type MarketingOpsCapability =
   | "adcampaigns"
   | "events"
   | "events-review"
-  | "designstudio";
+  | "designstudio"
+  // Event Platform (the agenda-organizer port). Two SIBLING capabilities, the
+  // same shape as `events` / `events-review`: `eventplatform` is the source's
+  // admin role, `eventplatform-shop` its shop-only role. Holding the shop one
+  // grants nothing outside the shop.
+  | "eventplatform"
+  | "eventplatform-shop";
 
 // GET /api/me. Authenticated but deliberately NOT gated — an authenticated
 // caller who holds none of the Marketing Ops groups still gets a 200 with
