@@ -29,6 +29,13 @@ vi.mock("@config/apiConfig", () => ({
   isEventPlatformConfigured: () => true,
 }));
 
+// The event switcher in the event header lists events; what it lists is not
+// what these tests are about, and the real hook needs Asgardeo and a
+// QueryClient.
+vi.mock("@features/marketing-ops/event-platform/api/events", () => ({
+  useListEvents: () => ({ data: [], isLoading: false }),
+}));
+
 const gate = vi.hoisted(() => ({ value: {} as MarketingOpsGate }));
 vi.mock("@features/marketing-ops/api/useMarketingOpsGate", () => ({
   useMarketingOpsGate: () => gate.value,

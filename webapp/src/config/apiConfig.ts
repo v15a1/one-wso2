@@ -948,11 +948,121 @@ export function isEventPlatformConfigured(): boolean {
   return Boolean(eventPlatformBackendUrl);
 }
 
-// Only what the skeleton names so far: the events list feeds the in-event
-// switcher once the data layer lands. The data-layer phase adds the rest of the
-// agenda-organizer API here, one builder per endpoint it calls.
+// One builder per endpoint the port calls, checked against the routes the
+// agenda-organizer's cmd/server/main.go actually registers (it wins over
+// openapi.yaml where the two disagree). See docs/ported-apps/event-platform.md §5.
+//
+// Two naming quirks are the backend's, not typos: some collections sit under
+// `/api/event/…` (singular — days, tracks, rooms, room mappings) while their
+// items sit at `/api/<thing>/{id}`, and the per-event collections sit under
+// `/api/events/{id}/…`. The builders follow the routes as they are.
+//
+// Every JSON body is bound with DisallowUnknownFields, so the hooks send exactly
+// the fields each handler declares — an extra key is a 400, not something the
+// server ignores.
 export const eventPlatformServiceUrls = {
+  // ---- events --------------------------------------------------------------
+  //
+  // PUT on one event is an UPSERT of its fields AND its full `days` array —
+  // that is how days are edited. The standalone day create/update/delete
+  // routes exist but nothing in the source UI calls them, so they have no
+  // builder here.
   events: `${eventPlatformBackendUrl}/api/events`,
+  event: (id: string) => `${eventPlatformBackendUrl}/api/events/${encodeURIComponent(id)}`,
+  // Every event's days, not one event's. The room-mapping tree filters by
+  // `configId` client side; there is no server filter.
+  days: `${eventPlatformBackendUrl}/api/event/days`,
+  exportAgenda: (id: string) =>
+    `${eventPlatformBackendUrl}/api/events/${encodeURIComponent(id)}/export/agenda`,
+  // `roles` is a comma list; the server defaults to `internal,external` when
+  // it is absent, so no param is sent rather than an empty one.
+  exportSpeakers: (id: string, roles?: string) =>
+    `${eventPlatformBackendUrl}/api/events/${encodeURIComponent(id)}/export/speakers${query(
+      roles ? new URLSearchParams({ roles }) : undefined,
+    )}`,
+
+  // ---- tracks, sections, footnotes, topics ---------------------------------
+  //
+  // Like days, `allTracks` is every event's tracks — used by the room-mapping
+  // tree, which groups them under the event's days itself.
+  allTracks: `${eventPlatformBackendUrl}/api/event/tracks`,
+  dayTracks: (dayId: string) =>
+    `${eventPlatformBackendUrl}/api/event/days/${encodeURIComponent(dayId)}/tracks`,
+  track: (id: string) => `${eventPlatformBackendUrl}/api/tracks/${encodeURIComponent(id)}`,
+  trackSections: (trackId: string) =>
+    `${eventPlatformBackendUrl}/api/tracks/${encodeURIComponent(trackId)}/sections`,
+  // Keynote sections belong to a day rather than a track, but are edited and
+  // deleted through the same `/track-sections/{id}` item route.
+  dayKeynoteSections: (dayId: string) =>
+    `${eventPlatformBackendUrl}/api/event/days/${encodeURIComponent(dayId)}/keynote-sections`,
+  trackSection: (id: string) =>
+    `${eventPlatformBackendUrl}/api/track-sections/${encodeURIComponent(id)}`,
+  dayFootnotes: (dayId: string) =>
+    `${eventPlatformBackendUrl}/api/event/days/${encodeURIComponent(dayId)}/footnotes`,
+  footnote: (id: string) => `${eventPlatformBackendUrl}/api/footnotes/${encodeURIComponent(id)}`,
+  eventTrackTopics: (eventId: string) =>
+    `${eventPlatformBackendUrl}/api/events/${encodeURIComponent(eventId)}/track-topics`,
+  // PUT only. The source client sent PATCH here, which the backend does not
+  // route, so a rename never saved.
+  trackTopic: (id: string) =>
+    `${eventPlatformBackendUrl}/api/track-topics/${encodeURIComponent(id)}`,
+
+  // ---- sessions and speakers -----------------------------------------------
+  //
+  // `scheduled=false` requires `configId` (an unscheduled session has no day
+  // to scope it by); the hooks always send `configId`, so a palette never
+  // lists another event's unscheduled sessions.
+  sessions: (filters?: { configId?: string; dayId?: string; scheduled?: boolean }) => {
+    const params = new URLSearchParams();
+    if (filters?.configId) params.set("configId", filters.configId);
+    if (filters?.dayId) params.set("dayId", filters.dayId);
+    if (filters?.scheduled !== undefined) params.set("scheduled", String(filters.scheduled));
+    return `${eventPlatformBackendUrl}/api/sessions${query(params)}`;
+  },
+  session: (id: string) => `${eventPlatformBackendUrl}/api/sessions/${encodeURIComponent(id)}`,
+  // PUT with all four fields null = unschedule.
+  sessionPlacement: (id: string) =>
+    `${eventPlatformBackendUrl}/api/sessions/${encodeURIComponent(id)}/placement`,
+  sessionArtifacts: (id: string) =>
+    `${eventPlatformBackendUrl}/api/sessions/${encodeURIComponent(id)}/artifacts`,
+  // The global speaker library, shared by every event. PUT on one speaker
+  // replaces its fields; PATCH toggles `visible` and nothing else.
+  speakers: `${eventPlatformBackendUrl}/api/speakers`,
+  speaker: (id: string) => `${eventPlatformBackendUrl}/api/speakers/${encodeURIComponent(id)}`,
+
+  // ---- rooms and activities ------------------------------------------------
+  //
+  // The rooms collection is POSTed bare (the event is in the body) but always
+  // listed with `configId`: without it the server returns every event's rooms,
+  // and room names repeat across events with their own rows and colours.
+  rooms: `${eventPlatformBackendUrl}/api/event/rooms`,
+  roomsForEvent: (configId: string) =>
+    `${eventPlatformBackendUrl}/api/event/rooms${query(new URLSearchParams({ configId }))}`,
+  room: (id: string) => `${eventPlatformBackendUrl}/api/rooms/${encodeURIComponent(id)}`,
+  // Same split as rooms: read with `configId` in the query, written with it in
+  // the body.
+  roomMappings: `${eventPlatformBackendUrl}/api/event/room-mappings`,
+  roomMappingsForEvent: (configId: string) =>
+    `${eventPlatformBackendUrl}/api/event/room-mappings${query(new URLSearchParams({ configId }))}`,
+  roomsReapply: `${eventPlatformBackendUrl}/api/event/rooms/reapply`,
+  eventActivities: (eventId: string) =>
+    `${eventPlatformBackendUrl}/api/events/${encodeURIComponent(eventId)}/activities`,
+  activity: (id: string) => `${eventPlatformBackendUrl}/api/activities/${encodeURIComponent(id)}`,
+  // PUT replaces the activity's whole schedule in one call.
+  activityHours: (id: string) =>
+    `${eventPlatformBackendUrl}/api/activities/${encodeURIComponent(id)}/hours`,
+
+  // ---- shop (admin or shop role) -------------------------------------------
+  //
+  // Orders carry shipping PII — keep responses out of logs and error text.
+  shopItems: (eventId: string) =>
+    `${eventPlatformBackendUrl}/api/events/${encodeURIComponent(eventId)}/shop/items`,
+  shopItem: (eventId: string, itemId: string) =>
+    `${eventPlatformBackendUrl}/api/events/${encodeURIComponent(eventId)}/shop/items/${encodeURIComponent(itemId)}`,
+  shopOrders: (eventId: string) =>
+    `${eventPlatformBackendUrl}/api/events/${encodeURIComponent(eventId)}/shop/orders`,
+  shopOrderStatus: (eventId: string, orderId: string) =>
+    `${eventPlatformBackendUrl}/api/events/${encodeURIComponent(eventId)}/shop/orders/${encodeURIComponent(orderId)}/status`,
 };
 
 // `?a=b` when there is anything to append, otherwise nothing — a bare trailing "?"
