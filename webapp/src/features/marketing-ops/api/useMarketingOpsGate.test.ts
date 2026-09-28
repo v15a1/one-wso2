@@ -51,13 +51,20 @@ function canSeeFor(m: MarketingOpsMe | undefined) {
 }
 
 describe("the Event Platform gate ids", () => {
-  it("shows the rail entry to either role", () => {
-    expect(canSeeFor(caller(["eventplatform"]))("mops-event-platform")).toBe(true);
-    expect(canSeeFor(caller(["eventplatform-shop"]))("mops-event-platform")).toBe(true);
+  it("shows All Events to either role", () => {
+    expect(canSeeFor(caller(["eventplatform"]))("mops-event-platform-events")).toBe(true);
+    expect(canSeeFor(caller(["eventplatform-shop"]))("mops-event-platform-events")).toBe(true);
   });
 
-  it("hides it from a marketing user with neither role", () => {
-    expect(canSeeFor(caller(["events"]))("mops-event-platform")).toBe(false);
+  it("shows Speakers to the admin role only", () => {
+    expect(canSeeFor(caller(["eventplatform"]))("mops-event-platform-speakers")).toBe(true);
+    expect(canSeeFor(caller(["eventplatform-shop"]))("mops-event-platform-speakers")).toBe(false);
+  });
+
+  it("hides both from a marketing user with neither role", () => {
+    const canSee = canSeeFor(caller(["events"]));
+    expect(canSee("mops-event-platform-events")).toBe(false);
+    expect(canSee("mops-event-platform-speakers")).toBe(false);
   });
 
   it("opens the admin screens to the admin role only", () => {
@@ -72,14 +79,15 @@ describe("the Event Platform gate ids", () => {
 
   it("opens everything to a Marketing Ops admin holding no capability", () => {
     const canSee = canSeeFor(caller([], true));
-    expect(canSee("mops-event-platform")).toBe(true);
+    expect(canSee("mops-event-platform-events")).toBe(true);
+    expect(canSee("mops-event-platform-speakers")).toBe(true);
     expect(canSee("mops-event-platform-admin")).toBe(true);
     expect(canSee("mops-event-platform-shop")).toBe(true);
   });
 
   it("opens nothing to a caller the backend has not authorized", () => {
     const canSee = canSeeFor({ ...caller(["eventplatform"]), authorized: false });
-    expect(canSee("mops-event-platform")).toBe(false);
+    expect(canSee("mops-event-platform-events")).toBe(false);
     expect(canSee("mops-event-platform-shop")).toBe(false);
   });
 });

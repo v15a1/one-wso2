@@ -186,16 +186,29 @@ export const MARKETING_OPS_APPS: readonly MenuApp[] = [
     icon: CalendarRangeIcon,
     purpose:
       "Plan an event's agenda, speakers, rooms and activities, and run its swag shop.",
+    // A shop-only user sees one item; keep it inside the group so the
+    // operation's shape doesn't change with the caller's role.
+    alwaysGroup: true,
     items: [
-      // ONE rail entry, with the source's two sidebars turned into tabs inside
-      // it — the Leave pattern. See event-platform/eventPlatformTabs.ts.
-      // Gate: `eventplatform` OR `eventplatform-shop`.
+      // The source's DashboardSideBar, as rail items rather than a tab row, so
+      // the operation reads as a group like its neighbours. Inside an event the
+      // tabs take over — see event-platform/eventPlatformTabs.ts.
+      //
+      // All Events opens for either role, so a shop-only user still has a way
+      // in; Speakers is admin-only, as in the source.
       {
-        id: "mops-event-platform",
-        label: "Event Platform",
-        desc: "Events, their agendas and speakers, and the event shop.",
+        id: "mops-event-platform-events",
+        label: "All Events",
+        desc: "Every event on the platform — open one to plan its agenda or run its shop.",
         requires: ["admin"],
-        path: "/marketing-ops/event-platform",
+        path: "/marketing-ops/event-platform/events",
+      },
+      {
+        id: "mops-event-platform-speakers",
+        label: "Speakers",
+        desc: "The speaker library shared by every event.",
+        requires: ["admin"],
+        path: "/marketing-ops/event-platform/speakers",
       },
     ],
   },

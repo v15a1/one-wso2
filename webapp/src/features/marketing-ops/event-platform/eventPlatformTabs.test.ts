@@ -16,8 +16,7 @@
 
 import { describe, expect, it } from "vitest";
 import {
-  EVENT_PLATFORM_ITEM_ID,
-  EVENT_PLATFORM_PATH,
+  EVENT_PLATFORM_ITEM_IDS,
   EVENT_TABS,
   TOP_LEVEL_TABS,
   eventPath,
@@ -42,10 +41,13 @@ const SHOP_ONLY = allowing("mops-event-platform-shop");
 const NOBODY = allowing();
 
 describe("the shape of the Event Platform", () => {
-  it("is one rail entry", () => {
-    const items = MARKETING_OPS_APPS.find((app) => app.key === "event-platform")?.items ?? [];
-    expect(items.map((i) => i.id)).toEqual([EVENT_PLATFORM_ITEM_ID]);
-    expect(items[0].path).toBe(EVENT_PLATFORM_PATH);
+  it("is a rail group with one item per top-level tab", () => {
+    const app = MARKETING_OPS_APPS.find((a) => a.key === "event-platform");
+    expect(app?.alwaysGroup).toBe(true);
+    expect(app?.items.map((i) => [i.id, i.path])).toEqual([
+      [EVENT_PLATFORM_ITEM_IDS.events, eventPlatformPath(topLevelTab("events")!)],
+      [EVENT_PLATFORM_ITEM_IDS.speakers, eventPlatformPath(topLevelTab("speakers")!)],
+    ]);
   });
 
   // The existing Events operation (attendee workbooks) owns `mops-events-*`.

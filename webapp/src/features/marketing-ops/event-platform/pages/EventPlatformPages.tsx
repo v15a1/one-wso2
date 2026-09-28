@@ -24,7 +24,6 @@ import { useMarketingOpsGate } from "@features/marketing-ops/api/useMarketingOps
 import EventPlatformShell from "../components/EventPlatformShell";
 import EventSwitcher from "../components/EventSwitcher";
 import {
-  EVENT_PLATFORM_PATH,
   EVENT_TABS,
   TOP_LEVEL_TABS,
   eventBasePath,
@@ -41,10 +40,11 @@ import {
 } from "../eventPlatformTabs";
 
 // The two page frames for the Event Platform — the top level, and inside one
-// event — plus the index redirects and the route guard. The Leave pattern
-// (features/leave/pages/LeavePage.tsx) twice over: a shell, a tab bar, a toggle
-// where a tab offers more than one screen, and an <Outlet /> for whichever
-// screen the URL names.
+// event — plus the index redirects and the route guard. Inside an event it is
+// the Leave pattern (features/leave/pages/LeavePage.tsx): a shell, a tab bar, a
+// toggle where a tab offers more than one screen, and an <Outlet /> for
+// whichever screen the URL names. At the top level the rail's All Events and
+// Speakers items are the navigation, so there is no tab bar there.
 //
 // The tab bar and toggle are filtered by the same gate that guards the routes,
 // so neither offers something the route would refuse — but the route is what
@@ -60,7 +60,7 @@ function useEventPlatformGate() {
 const ADMIN_GATE: EventPlatformGateId = "mops-event-platform-admin";
 const SHOP_GATE: EventPlatformGateId = "mops-event-platform-shop";
 
-/** `/marketing-ops/event-platform/*` outside an event: Events | Speakers. */
+/** `/marketing-ops/event-platform/*` outside an event: Events or Speakers, picked in the rail. */
 export function EventPlatformHomePage() {
   const gate = useEventPlatformGate();
   const { pathname } = useLocation();
@@ -75,7 +75,6 @@ export function EventPlatformHomePage() {
         <NoTopLevelTabs canOpenShop={gate.canSee(SHOP_GATE)} />
       ) : (
         <>
-          <RoutedTabs basePath={EVENT_PLATFORM_PATH} tabs={tabs} ariaLabel="Event Platform sections" />
           {tab && (
             <KindToggle
               tab={tab}

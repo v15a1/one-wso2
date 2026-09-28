@@ -80,11 +80,13 @@ const ITEM_CAPABILITY: Record<
   // Design Studio — backend/shared/access_map.yaml gates its router on the
   // `designstudio` group.
   "mops-design-studio-post-builder": "designstudio",
-  // Event Platform. The rail entry opens for either role; the other two are
-  // the gate ids its tabs ask (see event-platform/eventPlatformTabs.ts). The
-  // shop takes either capability because the source let admin OR shop into
-  // it (its router.tsx) and everything else to admin alone.
-  "mops-event-platform": ["eventplatform", "eventplatform-shop"],
+  // Event Platform. The first two are its rail items — All Events opens for
+  // either role so a shop user has a way in; the other two are the gate ids
+  // its tabs ask (see event-platform/eventPlatformTabs.ts). The shop takes
+  // either capability because the source let admin OR shop into it (its
+  // router.tsx) and everything else to admin alone.
+  "mops-event-platform-events": ["eventplatform", "eventplatform-shop"],
+  "mops-event-platform-speakers": "eventplatform",
   "mops-event-platform-admin": "eventplatform",
   "mops-event-platform-shop": ["eventplatform", "eventplatform-shop"],
 };

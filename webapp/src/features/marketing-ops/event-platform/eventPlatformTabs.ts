@@ -28,11 +28,18 @@
 // gate is enforced at the ROUTE, and a typed URL has to be refused the same way
 // a hidden toggle is.
 
-/** Where the single rail entry points. */
+/** The base of every Event Platform route. */
 export const EVENT_PLATFORM_PATH = "/marketing-ops/event-platform";
 
-/** The rail entry's id. Gated on either capability — see useMarketingOpsGate. */
-export const EVENT_PLATFORM_ITEM_ID = "mops-event-platform";
+/**
+ * The rail items, one per top-level tab, in rail order. The rail replaces the
+ * top-level tab row; inside an event the tab row is back. All Events is gated
+ * on either capability, Speakers on admin — see useMarketingOpsGate.
+ */
+export const EVENT_PLATFORM_ITEM_IDS = {
+  events: "mops-event-platform-events",
+  speakers: "mops-event-platform-speakers",
+} as const;
 
 /**
  * Permissions, resolved by `useMarketingOpsGate().canSee`. Two, because the
