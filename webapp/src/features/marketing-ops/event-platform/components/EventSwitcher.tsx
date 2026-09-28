@@ -14,24 +14,101 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import { Button } from "@wso2/oxygen-ui";
-import { ChevronDownIcon } from "@wso2/oxygen-ui-icons-react";
+import { useState } from "react";
+import { useLocation, useNavigate } from "react-router";
+import {
+  Button,
+  InputAdornment,
+  ListSubheader,
+  Menu,
+  MenuItem,
+  TextField,
+} from "@wso2/oxygen-ui";
+import { ChevronDownIcon, SearchIcon } from "@wso2/oxygen-ui-icons-react";
+import { useListEvents } from "@features/marketing-ops/event-platform/api/events";
+import {
+  eventBasePath,
+  eventPath,
+  parseEventPlatformPath,
+} from "@features/marketing-ops/event-platform/eventPlatformTabs";
 
-// The slot for the source header's event switcher (components/header/Header.tsx:
-// a searchable menu of every event that navigates to the same screen in the
-// chosen one). A disabled placeholder until the data layer can list events
-// from eventPlatformServiceUrls.events and name the current one — the id is
-// all the skeleton knows.
+// The source header's event switcher (components/header/Header.tsx): a
+// searchable menu of every event that opens the SAME screen in the chosen one,
+// so comparing two events' rooms is one click rather than a trip through the
+// list. Any app member may list events, shop operators included, so it needs
+// no gate of its own; the destination's route guard still applies.
 export default function EventSwitcher({ eventId }: { eventId: string }) {
+  const { data: events, isLoading } = useListEvents();
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+  const [search, setSearch] = useState("");
+
+  const current = events?.find((e) => e.id === eventId);
+  const needle = search.trim().toLowerCase();
+  const matches = (events ?? []).filter((e) => e.name.toLowerCase().includes(needle));
+
+  const close = () => {
+    setAnchor(null);
+    setSearch("");
+  };
+
+  const open = (id: string) => {
+    close();
+    const { tab, kind } = parseEventPlatformPath(pathname);
+    navigate(tab ? eventPath(id, tab, kind?.kind) : eventBasePath(id));
+  };
+
   return (
-    <Button
-      variant="outlined"
-      size="small"
-      disabled
-      endIcon={<ChevronDownIcon size={14} />}
-      sx={{ textTransform: "none" }}
-    >
-      Event {eventId}
-    </Button>
+    <>
+      <Button
+        variant="outlined"
+        size="small"
+        disabled={isLoading || !events?.length}
+        endIcon={<ChevronDownIcon size={14} />}
+        onClick={(e) => setAnchor(e.currentTarget)}
+        aria-haspopup="menu"
+        sx={{ textTransform: "none" }}
+      >
+        {current?.name ?? "Switch event"}
+      </Button>
+      <Menu
+        anchorEl={anchor}
+        open={Boolean(anchor)}
+        onClose={close}
+        slotProps={{ paper: { sx: { width: 280 } } }}
+      >
+        <ListSubheader sx={{ px: 1, pb: 0.5, lineHeight: "normal" }}>
+          <TextField
+            size="small"
+            placeholder="Search events"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            // Menu's type-ahead would otherwise swallow the keystrokes.
+            onKeyDown={(e) => e.stopPropagation()}
+            autoFocus
+            fullWidth
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon size={16} />
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
+        </ListSubheader>
+        {matches.length > 0 ? (
+          matches.map((evt) => (
+            <MenuItem key={evt.id} selected={evt.id === eventId} onClick={() => open(evt.id)}>
+              {evt.name}
+            </MenuItem>
+          ))
+        ) : (
+          <MenuItem disabled>No events found</MenuItem>
+        )}
+      </Menu>
+    </>
   );
 }
