@@ -47,7 +47,16 @@ const RESTRICTED_IDS = new Set(
 // Keep it in step with the backend's shared/access_map.yaml, which is that
 // scheme's single source of truth. Add a line here in the same phase that
 // uncomments the item's `path` in the registry.
-const ITEM_CAPABILITY: Record<string, MarketingOpsCapability> = {
+//
+// A value is one capability, or an array meaning ANY OF them. The array exists
+// for Event Platform, whose one rail entry fronts two sibling capabilities: a
+// shop-only user needs the entry to reach the shop, an admin to reach the rest,
+// so neither capability on its own is the right gate for it. An empty array
+// matches nothing, so a half-edited entry still fails closed.
+const ITEM_CAPABILITY: Record<
+  string,
+  MarketingOpsCapability | readonly MarketingOpsCapability[]
+> = {
   // Phase 2
   "mops-ad-analytics": "adcampaigns",
   "mops-campaign-tracker": "adcampaigns",
@@ -71,6 +80,15 @@ const ITEM_CAPABILITY: Record<string, MarketingOpsCapability> = {
   // Design Studio — backend/shared/access_map.yaml gates its router on the
   // `designstudio` group.
   "mops-design-studio-post-builder": "designstudio",
+  // Event Platform. The first two are its rail items — All Events opens for
+  // either role so a shop user has a way in; the other two are the gate ids
+  // its tabs ask (see event-platform/eventPlatformTabs.ts). The shop takes
+  // either capability because the source let admin OR shop into it (its
+  // router.tsx) and everything else to admin alone.
+  "mops-event-platform-events": ["eventplatform", "eventplatform-shop"],
+  "mops-event-platform-speakers": "eventplatform",
+  "mops-event-platform-admin": "eventplatform",
+  "mops-event-platform-shop": ["eventplatform", "eventplatform-shop"],
 };
 
 // Menu ids belonging to the Marketing Admin app. Gated on `isAdmin` alone
@@ -133,7 +151,11 @@ export function useMarketingOpsGate(enabled = true): MarketingOpsGate {
     const capability = ITEM_CAPABILITY[itemId];
     // hasMarketingOpsCapability applies the isAdmin master key, so an admin
     // sees every feature despite holding no feature capabilities of their own.
-    if (capability) return hasMarketingOpsCapability(me.data, capability);
+    if (capability) {
+      const anyOf: readonly MarketingOpsCapability[] =
+        typeof capability === "string" ? [capability] : capability;
+      return anyOf.some((c) => hasMarketingOpsCapability(me.data, c));
+    }
 
     // Unrestricted item (the utilities) → visible to any authorized caller.
     // Anything that declares `requires` but reached here has no mapping above,

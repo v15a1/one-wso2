@@ -929,6 +929,32 @@ export const marketingOpsServiceUrls = {
   // that ports it, so this object never lists a URL nothing calls.
 };
 
+// The Event Platform backend (digiops-marketing/apps/conference/agenda-organizer)
+// — its own service, NOT a router of the Marketing Ops backend above, so it has a
+// key of its own. Who may use it is still decided by the Marketing Ops gate
+// (/api/me capabilities `eventplatform` and `eventplatform-shop`); this URL is
+// only where the data lives.
+//
+// Like Marketing Ops, its routes are namespaced under `/api/*`. Same
+// trailing-slash strip, for the same reason.
+//
+// Empty string = not configured; the Event Platform shell renders a "not
+// connected" state rather than firing broken requests.
+export const eventPlatformBackendUrl: string = (
+  window.config?.ONE_WSO2_EVENT_PLATFORM_BACKEND_URL ?? ""
+).replace(/\/+$/, "");
+
+export function isEventPlatformConfigured(): boolean {
+  return Boolean(eventPlatformBackendUrl);
+}
+
+// Only what the skeleton names so far: the events list feeds the in-event
+// switcher once the data layer lands. The data-layer phase adds the rest of the
+// agenda-organizer API here, one builder per endpoint it calls.
+export const eventPlatformServiceUrls = {
+  events: `${eventPlatformBackendUrl}/api/events`,
+};
+
 // `?a=b` when there is anything to append, otherwise nothing — a bare trailing "?"
 // is harmless but ends up in query keys and logs, and reads as a bug.
 function query(params?: URLSearchParams): string {

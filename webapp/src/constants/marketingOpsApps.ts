@@ -55,6 +55,7 @@
 // Admin last because it configures the rest. Don't sort it.
 
 import {
+  CalendarRangeIcon,
   ChartNoAxesCombinedIcon,
   MegaphoneIcon,
   PaletteIcon,
@@ -172,6 +173,42 @@ export const MARKETING_OPS_APPS: readonly MenuApp[] = [
         desc: "Review submitted attendee lists, approve or send back, and export for Pardot.",
         requires: ["admin"],
         path: "/marketing-ops/events/review",
+      },
+    ],
+  },
+  {
+    // The agenda-organizer port — a different app from Events above (attendee
+    // workbooks), which is why its ids are `mops-event-platform*` and never
+    // `mops-events-*`. Placed next to Events because the two are used by the
+    // same people around the same events.
+    key: "event-platform",
+    name: "Event Platform",
+    icon: CalendarRangeIcon,
+    purpose:
+      "Plan an event's agenda, speakers, rooms and activities, and run its swag shop.",
+    // A shop-only user sees one item; keep it inside the group so the
+    // operation's shape doesn't change with the caller's role.
+    alwaysGroup: true,
+    items: [
+      // The source's DashboardSideBar, as rail items rather than a tab row, so
+      // the operation reads as a group like its neighbours. Inside an event the
+      // tabs take over — see event-platform/eventPlatformTabs.ts.
+      //
+      // All Events opens for either role, so a shop-only user still has a way
+      // in; Speakers is admin-only, as in the source.
+      {
+        id: "mops-event-platform-events",
+        label: "All Events",
+        desc: "Every event on the platform — open one to plan its agenda or run its shop.",
+        requires: ["admin"],
+        path: "/marketing-ops/event-platform/events",
+      },
+      {
+        id: "mops-event-platform-speakers",
+        label: "Speakers",
+        desc: "The speaker library shared by every event.",
+        requires: ["admin"],
+        path: "/marketing-ops/event-platform/speakers",
       },
     ],
   },
@@ -342,6 +379,7 @@ export const MARKETING_OPS_EYEBROW = {
   emailWorkbench: eyebrowFor("email-workbench"),
   adCampaigns: eyebrowFor("ad-campaigns"),
   events: eyebrowFor("events"),
+  eventPlatform: eyebrowFor("event-platform"),
   crmUpload: eyebrowFor("crm-upload"),
   designStudio: eyebrowFor("design-studio"),
   utilities: eyebrowFor("utilities"),

@@ -110,6 +110,13 @@ window.config = {
   // when absent, the Marketing Ops screens show a "not connected" state.
   // ONE_WSO2_MARKETINGOPS_BACKEND_URL: "<your-marketing-ops-backend-url>",
 
+  // digiops-marketing agenda-organizer backend base URL — the Event Platform
+  // screens under Marketing Ops. A service of its own, not part of the
+  // marketing-ops backend above, though access is still decided by that
+  // backend's /api/me. Routes live under /api/*. Optional — when absent, the
+  // Event Platform screens show a "not connected" state.
+  // ONE_WSO2_EVENT_PLATFORM_BACKEND_URL: "https://api.example.com/event-platform",
+
   // digiops-finance due_diligence backend base URL — the Due Diligence app,
   // surfaced under both the Finance and Legal perspectives. Same Choreo API
   // gateway URL pattern as the other digiops-finance backends above. Optional
